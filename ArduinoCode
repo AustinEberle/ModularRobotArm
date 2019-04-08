@@ -1,0 +1,118 @@
+
+#include <Servo.h>
+
+Servo base;
+Servo upDown;
+Servo forwardBackward;
+Servo quickRelease;
+Servo action;
+
+int const xAxis = A0;
+int const yAxis = A1;
+int const buttonUp = 2;
+int const buttonDown = 4;
+int const buttonLeft = 5;
+int const joyStickButton = 8;
+
+
+
+int buttons[] = {buttonUp, buttonDown, buttonLeft, joyStickButton};
+int xpos = 90;
+int ypos = 90;
+int zpos = 90;
+int releaseState = false;
+int lastReleaseState = 1;
+int rotateState = 0;
+int lastRotateState = 1;
+bool locked = false;
+bool rotate = false;
+void setup() {
+  //set up the buttons to be inputs
+  for (int i = 0; i < 4; ++i) {
+    pinMode(buttons[i], INPUT);
+    digitalWrite(buttons[i], HIGH);
+  }
+  base.attach(9);
+  upDown.attach(10);
+  forwardBackward.attach(11);
+  quickRelease.attach(6);
+  action.attach(3); //We used one pin to control both of the hands used in our demo
+  //Serial was used for debugging purposes. 
+  Serial.begin(9600);
+  Serial.print("begin");
+}
+
+void loop() {
+
+
+  releaseState = digitalRead(buttonLeft);
+  rotateState = digitalRead(joyStickButton);
+
+  //Check to see if the lock button is pressed
+  if (releaseState == 0 && lastReleaseState == 1) {
+    locked = !locked; //Toggle the servos with the button press
+  }
+
+  if (locked == false) {
+    quickRelease.write(90); //If not currently locked, lock it
+  }
+  else {
+    quickRelease.write(0);
+  }
+
+  //Check to see if the action button is pressed
+  if (rotateState == 0 && lastRotateState == 1) {
+    rotate = !rotate; //Toggle the servo with the button press
+  }
+
+  if (rotate == false) {
+    action.write(90); //If not currently gripping, grip
+  }
+  else {
+    action.write(0);
+  }
+
+  //store the current state
+  lastReleaseState = releaseState;
+  lastRotateState = rotateState;
+
+  //movement in the X direction
+  if (analogRead(xAxis) > 600 && xpos < 180) {
+    xpos += 1;
+    base.write(xpos);
+    delay(10);
+  }
+
+  if (analogRead(xAxis) < 400 && xpos > 0) {
+    xpos -= 1;
+    base.write(xpos);
+    delay(10);
+  }
+
+  //movement in the Y direction
+  if (analogRead(yAxis) > 600 && ypos < 180) {
+    ypos += 1;
+    upDown.write(ypos);
+    delay(10);
+  }
+
+  if (analogRead(yAxis) < 400 && ypos > 0) {
+    ypos -= 1;
+    upDown.write(ypos);
+    delay(10);
+  }
+
+  //movement in the Z direction
+  if (digitalRead(buttonUp) == 0 && digitalRead(buttonDown) == 1 && zpos < 180) {
+    zpos += 1;
+    forwardBackward.write(zpos);
+    delay(10);
+  }
+
+  if (digitalRead(buttonDown) == 0 && digitalRead(buttonUp) == 1 && zpos > 0) {
+    zpos -= 1;
+    forwardBackward.write(zpos);
+    delay(10);
+  }
+   
+}
